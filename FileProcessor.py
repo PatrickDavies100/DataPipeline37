@@ -1,33 +1,65 @@
-import json
 import pandas as pd
-from pandas import DataFrame
+import json
+from datetime import datetime
+from PySide6.QtCore import QObject, Signal
 
 
-def read_file(filename: str) -> DataFrame | None:
+class CurrentDataFrame:
+    """The dataframe that is active"""
+    _instance = None
+    _dataframe = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(CurrentDataFrame, cls).__new__(cls)
+            cls._dataframe = pd.DataFrame()
+        return cls._instance
+
+    def get_dataframe(self):
+        return self._dataframe
+
+    def update_dataframe(self, new_df):
+        self._dataframe = new_df
+
+
+class PLProcess:
+    """The processes used for the current dataset"""
+
+    def __init__(self, title, description, columns):
+        self.title = title
+        self.description = description
+        self.columns = columns
+        self.created_at = datetime.now()
+
+        def __repr__(self):
+            return f"<Instruction(title={self.title})>"
+
+
+def read_file(filename: str) -> pd.DataFrame | None:
     """Reads supported filetypes and outputs them as a Dataframe
 
     Supported filetypes: CSV, JSON
     """
 
-    fileEnd = filename[-3:]
+    fileend = filename[-3:]
 
-    if fileEnd.__eq__('csv'):
+    if fileend.__eq__('csv'):
         print(f'Reading CSV file "{filename}" ')
-        df = read_CSV(filename)
+        df = read_csv(filename)
     elif filename[0].__eq__('{') and filename[-1].__eq__('}'):
         print(f'Reading JSON file "{filename}" ')
-        df = read_JSON(filename)
+        df = read_json(filename)
     else:
         return None
     return df
 
 
-def read_CSV(filename: str) -> pd.DataFrame:
+def read_csv(filename: str) -> pd.DataFrame:
     df = pd.read_csv(filename)
     return df
 
 
-def read_JSON(filename: str) -> pd.DataFrame:
+def read_json(filename: str) -> pd.DataFrame:
     df = pd.read_json(filename)
     return df
 
@@ -35,3 +67,37 @@ def read_JSON(filename: str) -> pd.DataFrame:
 def read_excel(filename: str) -> pd.DataFrame:
     df = pd.read_excel(filename)
     return df
+
+
+def test_dataframe_constructor() -> pd.DataFrame:
+    print('Generating dataframe of test data in FileProcessor module')
+    d = {'col1': [1, 3, 3, 1, 3, 3, 1, 3, 3, 10],
+         'col2': [4, None, 6, 1, 3, 3, 4, None, 6, 1],
+         'col3': [8.19, None, 8.5, 4, None, 6, 1, 3, 3, 10],
+         'col4': [1.2, None, None, 4, None, 6, 1, 3, 3, 1]}
+    df = pd.DataFrame(data=d)
+    c = CurrentDataFrame()
+    c.update_dataframe(new_df=df)
+    return c.get_dataframe()
+
+
+def save_instructions_to_file(processes, filename='process.json'):
+    with open(filename, 'w') as file:
+        json.dump([pr.__dict__ for pr in processes], file, default=str)
+
+
+def load_instructions_from_file(filename='process.json'):
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        return [PLProcess(**pr) for pr in data]
+
+class DataEmitter(QObject):
+    """Sends data to the front end"""
+    send_string = Signal(str)
+    send_series = Signal(pd.Series)
+    send_df = Signal(pd.DataFrame)
+
+    def dataframe_sender(self):
+        d = test_dataframe_constructor()
+        self.send_df.emit(d)
+

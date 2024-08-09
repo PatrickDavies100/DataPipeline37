@@ -3,62 +3,59 @@ import sys
 import pandas as pd
 from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtWidgets import *
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor, QAction
 from PySide6.QtCore import Qt, QObject, Signal, Slot, QModelIndex
 
-import Cleaning
+import FileProcessor
 
 current_dataset = "Current Dataset:\n"
 mode_day = True
-
-
-class SideWindow(QWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setSizePolicy(QSizePolicy.Policy.Expanding,
-                           QSizePolicy.Policy.MinimumExpanding)
-
-        QtWidgets.QSizePolicy.setHorizontalStretch(self.sizePolicy(), 1)
-
-    def sizeHint(self):
-        return QtCore.QSize(40, 120)
-
-    def paintEvent(self, e):
-        painter = QtGui.QPainter(self)
-        brush = QtGui.QBrush()
-        brush.setColor(QtGui.QColor('black'))
-        rect = QtCore.QRect(0, 0, painter.device().width(), painter.device().height())
-        painter.fillRect(rect, brush)
+sample_n = 5  # Number of records displayed in sample dataframe
 
 
 class MainWindow(QMainWindow):
+    button_clicked = Signal(int)
     def __init__(self):
         super(MainWindow, self).__init__()
 
         self.setWindowTitle("Pipeline 37 App")
         self.setMinimumWidth(800)
         self.setMinimumHeight(500)
-        self.info_box = StatusWindow('orange')
+
+        toolbar = QToolBar("Main toolbar")
+        self.addToolBar(toolbar)
 
         layout1 = QHBoxLayout()
         status_panel = QVBoxLayout()
         main_panel = QTabWidget()
 
-        info_box = StatusWindow('orange')
-        info_box.setMinimumSize(100, 200)
-        status_panel.addWidget(info_box)
+        # Context-sensitive window
+        self.context_box = StatusWindow('orange')
+        self.context_box.setMinimumSize(100, 200)
+        status_panel.addWidget(self.context_box)
 
-        self.status_button = QPushButton("Status window button 2")
-        self.status_button.setCheckable(True)
-        status_panel.addWidget(self.status_button)
-        # Connect button click to fetch_text method in backend
-        self.status_button.clicked.connect(info_box.fetch_text_from_backend)
+        menu = self.menuBar()
+        button_imp = QAction("Import dataset", self)
+        button_imp.setStatusTip("Read a CSV or JSON file containing a dataset")
+        button_imp.triggered.connect(self.signaller(1))
+        button_imp.triggered.connect(self.context_box.reset(1))
+        button_exp = QAction("Export dataset", self)
+        button_exp.setStatusTip("Export the current dataset as a CSV or JSON file")
+        button_save_pr = QAction("Save the current processes")
+        button_load_pr = QAction("Load a set of data processes")
+        file_menu = menu.addMenu("&File")
+        file_menu.addAction(button_imp)
+        file_menu.addAction(button_exp)
+        file_menu.addAction(button_save_pr)
+        file_menu.addAction(button_load_pr)
+        button_appearance = QAction("Data sample")
+        options_menu = menu.addMenu("&Options")
+        options_menu.addAction(button_appearance)
 
+        # Purple area of screen
         status_area = AreaWidget('purple')
         status_panel.addWidget(status_area)
         layout1.addLayout(status_panel)
-        # Add side window here then reposition when it works
 
         # Window with data sample
         data_display = DataDisplayWindow('green')
@@ -67,6 +64,11 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(layout1)
         self.setCentralWidget(widget)
+        self.setStatusBar(QStatusBar(self))
+
+    def signaller(self, context: int) -> None:
+        print('signaller function' + str(context))
+        self.button_clicked.emit(context)
 
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -115,6 +117,8 @@ class TableModel(QtCore.QAbstractTableModel):
 
 
 class DataDisplayWindow(QWidget):
+    """The window with a sample of the current data displayed"""
+    button_clicked = Signal(int)
     def __init__(self, color: str):
         super(DataDisplayWindow, self).__init__()
 
@@ -129,71 +133,69 @@ class DataDisplayWindow(QWidget):
         palette.setColor(QPalette.Window, QColor(color))
         self.setPalette(palette)
 
+        # Add data to initialise the table view
         self.table = QtWidgets.QTableView()
-        d = {'col1': [1, 2, 3], 'col2': [4, None, 6], 'col3': [8.19
-            , None, 8.5], 'col4': [1.2, None, None]}
+        d = {'col1': [0]}
         df = pd.DataFrame(data=d)
 
         self.model = TableModel(df)
         self.table.setModel(self.model)
         layout.addWidget(self.table)
-        add_df_button = QPushButton("Add data")
+        import_button = QPushButton("Import data")
+        import_button.clicked.connect(self.import_data())
+        layout.addWidget(import_button)
+
+        add_df_button = QPushButton("Add test data")
         add_df_button.clicked.connect(self.fetch_data_from_backend)
         layout.addWidget(add_df_button)
         self.setLayout(layout)
 
+    # not working
+    def import_data(self):
+        print('import_data function')
+        self.button_clicked.emit(1)
+
     def fetch_data_from_backend(self):
-        backend = Cleaning.StatusEmitter()
+        backend = FileProcessor.DataEmitter()
         backend.send_df.connect(self.update_data)
         backend.dataframe_sender()
 
-    def update_data(self, nu_data):
-        print(nu_data)
+    def update_data(self, new_data):
+        """Changes the data being displayed"""
         pd.options.future.infer_string = True
-        # Update data in the model
-        self.model.set_dataframe(nu_data)
-
+        self.model.set_dataframe(new_data.sample(sample_n))
 
 
 class StatusWindow(QWidget):
-    past_status_text = 'past'
+    # past_status_text = 'past'
 
     def __init__(self, color: str):
         super(StatusWindow, self).__init__()
-        self.active_status = QLabel('active')
-        self.past_status = QLabel(self.past_status_text)
-
         self.setAutoFillBackground(True)
         layout = QtWidgets.QVBoxLayout()
-
-        self.status_button = QPushButton("Generate test series")
-        self.status_button.setCheckable(True)
-        layout.addWidget(self.status_button)
-        # Connect button click to fetch_text method in backend
-        self.status_button.clicked.connect(self.fetch_text_from_backend)
 
         self.status_button = QPushButton("Generate test dataframe")
         self.status_button.setCheckable(True)
         layout.addWidget(self.status_button)
         # Connect button click to fetch_text method in backend
-        self.status_button.clicked.connect(self.fetch_text_from_backend)
+        #self.status_button.clicked.connect(self.fetch_text_from_backend)
 
-        layout.addWidget(QLabel("TestTestTest"))
-        layout.addWidget(self.past_status)
-        layout.addWidget(self.active_status)
         self.setLayout(layout)
 
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(color))
         self.setPalette(palette)
 
-    def fetch_text_from_backend(self):
-        backend = Cleaning.StatusEmitter()
-        backend.send_string.connect(self.update_text_label)
-        backend.run_test_function('Chaotic fish')
+    def reset(self, context: int) -> None:
+        if context == 1:
+            print('1')
+            layout = QtWidgets.QVBoxLayout()
+            layout.addWidget(QLabel("File to import:"))
+            layout.addWidget(QLineEdit())
+            layout.addWidget(QPushButton("Import"))
+        self.setLayout(layout)
 
-    def update_text_label(self, text):
-        self.active_status.setText(text)
+
 
 
 class AreaWidget(QWidget):

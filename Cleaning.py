@@ -1,28 +1,16 @@
 import math
 from collections import defaultdict
 import pandas as pd
-import numpy as np
 
-import DataProcessor37.FileReader as Reader
+from PySide6.QtCore import QObject, Signal
+
+import PySide6Test
 
 # Set pandas display options
 pd.set_option('display.max_rows', 200)  # Show more rows
 pd.set_option('display.max_columns', None)  # Show all columns
 pd.set_option('display.width', 1000)  # Set the display width
 pd.set_option('display.max_colwidth', None)  # Show full column content
-
-
-# Count unique values in the 'product_id' column
-#categoryCount = df['categoryName'].value_counts()
-
-#print (df.stars.describe())
-#print(df.dtypes)
-#print(data.dtypes.iloc[0])
-#print(data.iloc[0].iloc[1])
-
-
-def get_small_sample(df: pd.DataFrame, rows: int) -> pd.DataFrame:
-    """Return a random sample of a dataframe"""
 
 
 def get_metadata(df: pd.DataFrame) -> str:
@@ -172,29 +160,30 @@ def median_split(ser: pd.Series) -> tuple:
 
 
 def test_dataframe_constructor() -> pd.DataFrame:
-    d = {'col1': [1, 2, 3], 'col2': [4, None, 6], 'col3': [8.19
-        , None, 8.5]}
+    print('Generating dataframe of test data')
+    d = {'col1': [1, 3, 3], 'col2': [4, None, 6], 'col3': [8.19
+        , None, 8.5], 'col4': [1.2, None, None]}
     df = pd.DataFrame(data=d)
     return df
 
 
 def test_series_constructor() -> pd.Series:
+    print('Generating Test Series')
     d = {0: 1.2, 1: 2.9, 2: 3.5, 3: 4.3, 4: 5.7, 5: 6.1}
     ser = pd.Series(data=d, index=[0, 1, 2, 3, 4, 5])
     return ser
 
 
+class StatusEmitter(QObject):
+    """Sends signal to front end for testing"""
+    send_string = Signal(str)
+    send_series = Signal(pd.Series)
+    send_df = Signal(pd.DataFrame)
 
+    def run_test_function_2(self):
+        test_series = test_series_constructor()
+        self.send_series.emit(test_series)
 
-# Convert to a list
-#column_names_list = list(column_names)
-
-# Read file
-# df = Reader.read_file('cleaned_amazon_data.csv')
-
-test_data = test_series_constructor()
-print(outliers(test_data))
-print ()
-
-
-#print(get_metadata(data))
+    def dataframe_sender(self):
+        test_df = test_dataframe_constructor()
+        self.send_df.emit(test_df)
