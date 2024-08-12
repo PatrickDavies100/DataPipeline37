@@ -1,7 +1,10 @@
 import pandas as pd
-import json
 from datetime import datetime
 from PySide6.QtCore import QObject, Signal
+
+#File Process Key
+
+import ProcessesController
 
 
 class CurrentDataFrame:
@@ -20,19 +23,6 @@ class CurrentDataFrame:
 
     def update_dataframe(self, new_df):
         self._dataframe = new_df
-
-
-class PLProcess:
-    """The processes used for the current dataset"""
-
-    def __init__(self, title, description, columns):
-        self.title = title
-        self.description = description
-        self.columns = columns
-        self.created_at = datetime.now()
-
-        def __repr__(self):
-            return f"<Instruction(title={self.title})>"
 
 
 def read_file(filename: str) -> pd.DataFrame | None:
@@ -78,18 +68,10 @@ def test_dataframe_constructor() -> pd.DataFrame:
     df = pd.DataFrame(data=d)
     c = CurrentDataFrame()
     c.update_dataframe(new_df=df)
+    ProcessesController.add_process(('Generate test dataframe',
+                                     -1))
     return c.get_dataframe()
 
-
-def save_instructions_to_file(processes, filename='process.json'):
-    with open(filename, 'w') as file:
-        json.dump([pr.__dict__ for pr in processes], file, default=str)
-
-
-def load_instructions_from_file(filename='process.json'):
-    with open(filename, 'r') as file:
-        data = json.load(file)
-        return [PLProcess(**pr) for pr in data]
 
 class DataEmitter(QObject):
     """Sends data to the front end"""
@@ -100,4 +82,6 @@ class DataEmitter(QObject):
     def dataframe_sender(self):
         d = test_dataframe_constructor()
         self.send_df.emit(d)
+
+
 

@@ -1,10 +1,9 @@
 import math
 from collections import defaultdict
 import pandas as pd
-
 from PySide6.QtCore import QObject, Signal
 
-import PySide6Test
+import ProcessesController
 
 # Set pandas display options
 pd.set_option('display.max_rows', 200)  # Show more rows
@@ -99,6 +98,8 @@ def float_to_int(ser: pd.Series, nulls: int = 0, rounding: bool = False,
     if rounding:
         ser = rounder(ser, rounding_point)
     ser = ser.astype(int)
+    ProcessesController.add_process(('Convert float to int',
+                                     ser))
     return ser
 
 

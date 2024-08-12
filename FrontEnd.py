@@ -57,17 +57,38 @@ class MainWindow(QMainWindow):
         status_panel.addWidget(status_area)
         layout1.addLayout(status_panel)
 
-        # Window with data sample
+        # Window with data sample - working on 12/08/2024
+        self.stacklayout = QStackedLayout()
+
+
+        btn_data = QPushButton("Data display")
+        btn_data.pressed.connect(self.activate_tab_1)
+        layout1.addWidget(btn_data)
         data_display = DataDisplayWindow('green')
-        layout1.addWidget(data_display)
+
+
+        btn_process = QPushButton("Process View")
+        btn_process.pressed.connect(self.activate_tab_2)
+        layout1.addWidget(btn_process)
+
+        self.stacklayout.addWidget(data_display)
+        self.stacklayout.addWidget(AreaWidget("green"))
+
+        layout1.addLayout(self.stacklayout)
 
         widget = QWidget()
         widget.setLayout(layout1)
         self.setCentralWidget(widget)
         self.setStatusBar(QStatusBar(self))
 
+    def activate_tab_1(self):
+        self.stacklayout.setCurrentIndex(0)
+
+    def activate_tab_2(self):
+        self.stacklayout.setCurrentIndex(1)
+
     def signaller(self, context: int) -> None:
-        print('signaller function' + str(context))
+        print('signaller function ' + str(context))
         self.button_clicked.emit(context)
 
 
@@ -141,8 +162,8 @@ class DataDisplayWindow(QWidget):
         self.model = TableModel(df)
         self.table.setModel(self.model)
         layout.addWidget(self.table)
-        import_button = QPushButton("Import data")
-        import_button.clicked.connect(self.import_data())
+        import_button = QPushButton("Save process")
+        import_button.clicked.connect(self.save_as_csv)
         layout.addWidget(import_button)
 
         add_df_button = QPushButton("Add test data")
@@ -150,10 +171,11 @@ class DataDisplayWindow(QWidget):
         layout.addWidget(add_df_button)
         self.setLayout(layout)
 
-    # not working
-    def import_data(self):
-        print('import_data function')
-        self.button_clicked.emit(1)
+    def save_as_csv(self):
+        print('save_as_csv activated in frontend')
+        backend = FileProcessor.DataEmitter()
+        backend.send_df.connect(self.update_data)
+        backend.csv_reader()
 
     def fetch_data_from_backend(self):
         backend = FileProcessor.DataEmitter()
@@ -195,9 +217,6 @@ class StatusWindow(QWidget):
             layout.addWidget(QPushButton("Import"))
         self.setLayout(layout)
 
-
-
-
 class AreaWidget(QWidget):
 
     def __init__(self, color):
@@ -210,4 +229,5 @@ class AreaWidget(QWidget):
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(color))
         self.setPalette(palette)
+
 
