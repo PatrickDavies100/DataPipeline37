@@ -28,6 +28,17 @@ def category_filter(df: pd.DataFrame) -> pd.DataFrame:
     """Filters a dataframe by category with optional extra features
     """
 
+def find_string_instances(s: pd.Series) -> pd.Series:
+    """Finds instances of a substring in a series."""
+    print(s.dtype)
+    series_dt = str(s.dtype)
+
+
+def find_and_replace(s: pd.Series) -> pd.Series:
+    # This should show the instances in the data window and then allow the user to
+    # choose whether to replace
+    """Replaces a substring in a series with a new string."""
+
 
 def unique_value_count(s: pd.Series) -> tuple:
     """Returns data about unique values in a series

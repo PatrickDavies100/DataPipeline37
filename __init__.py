@@ -1,8 +1,7 @@
 import sys
-import pyarrow
-import AmazonUK.FrontEnd as Front
-from AmazonUK.Cleaning import *
-from AmazonUK.FileProcessor import *
+import FrontEnd as Front
+from Cleaning import *
+from FileProcessor import *
 
 
 if __name__ == "__main__":

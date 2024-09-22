@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         self.context_box = StatusWindow('orange')
         self.context_box.setMinimumSize(100, 200)
         status_panel.addWidget(self.context_box)
+        self.rightSideLayout = QVBoxLayout()
 
         menu = self.menuBar()
         button_imp = QAction("Import dataset", self)
@@ -57,24 +58,33 @@ class MainWindow(QMainWindow):
         status_panel.addWidget(status_area)
         layout1.addLayout(status_panel)
 
-        # Window with data sample - working on 12/08/2024
-        self.stacklayout = QStackedLayout()
+        # Window with data sample
+        self.stackLayout = QStackedLayout()
+        self.rightSideLayout = QVBoxLayout()
+        tabs_layout = QHBoxLayout()
 
-
-        btn_data = QPushButton("Data display")
+        btn_data = QPushButton("Data")
         btn_data.pressed.connect(self.activate_tab_1)
-        layout1.addWidget(btn_data)
+        tabs_layout.addWidget(btn_data)
         data_display = DataDisplayWindow('green')
+        self.stackLayout.addWidget(data_display)
 
-
-        btn_process = QPushButton("Process View")
+        btn_process = QPushButton("Process")
         btn_process.pressed.connect(self.activate_tab_2)
-        layout1.addWidget(btn_process)
+        tabs_layout.addWidget(btn_process)
+        process = AreaWidget('blue')
+        self.stackLayout.addWidget(process)
 
-        self.stacklayout.addWidget(data_display)
-        self.stacklayout.addWidget(AreaWidget("green"))
+        btn_active = QPushButton("Active")
+        btn_active.pressed.connect(self.activate_tab_3)
+        tabs_layout.addWidget(btn_active)
+        active = AreaWidget('orange')
+        self.stackLayout.addWidget(active)
 
-        layout1.addLayout(self.stacklayout)
+        self.rightSideLayout.addLayout(tabs_layout)
+
+        self.rightSideLayout.addLayout(self.stackLayout)
+        layout1.addLayout(self.rightSideLayout)
 
         widget = QWidget()
         widget.setLayout(layout1)
@@ -82,13 +92,15 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
 
     def activate_tab_1(self):
-        self.stacklayout.setCurrentIndex(0)
+        self.stackLayout.setCurrentIndex(0)
 
     def activate_tab_2(self):
-        self.stacklayout.setCurrentIndex(1)
+        self.stackLayout.setCurrentIndex(1)
+
+    def activate_tab_3(self):
+        self.stackLayout.setCurrentIndex(2)
 
     def signaller(self, context: int) -> None:
-        print('signaller function ' + str(context))
         self.button_clicked.emit(context)
 
 
@@ -167,25 +179,26 @@ class DataDisplayWindow(QWidget):
         layout.addWidget(import_button)
 
         add_df_button = QPushButton("Add test data")
-        add_df_button.clicked.connect(self.fetch_data_from_backend)
+        add_df_button.clicked.connect(self.fetch_df_from_backend)
         layout.addWidget(add_df_button)
         self.setLayout(layout)
 
     def save_as_csv(self):
         print('save_as_csv activated in frontend')
         backend = FileProcessor.DataEmitter()
-        backend.send_df.connect(self.update_data)
+        backend.send_df.connect(self.update_df)
         backend.csv_reader()
 
-    def fetch_data_from_backend(self):
+    def fetch_df_from_backend(self):
         backend = FileProcessor.DataEmitter()
-        backend.send_df.connect(self.update_data)
+        backend.send_df.connect(self.update_df)
         backend.dataframe_sender()
 
-    def update_data(self, new_data):
+    def update_df(self, new_data):
         """Changes the data being displayed"""
         pd.options.future.infer_string = True
-        self.model.set_dataframe(new_data.sample(sample_n))
+        self.model.set_dataframe(new_data.sample(sample_n).sort_index())
+        # need to put sample in order
 
 
 class StatusWindow(QWidget):
@@ -196,10 +209,10 @@ class StatusWindow(QWidget):
         self.setAutoFillBackground(True)
         layout = QtWidgets.QVBoxLayout()
 
-        self.status_button = QPushButton("Generate test dataframe")
-        self.status_button.setCheckable(True)
-        layout.addWidget(self.status_button)
-        # Connect button click to fetch_text method in backend
+        self.func_test_button = QPushButton("Test function")
+        self.func_test_button.setCheckable(True)
+        layout.addWidget(self.func_test_button)
+        # Connect button click to something in backend
         #self.status_button.clicked.connect(self.fetch_text_from_backend)
 
         self.setLayout(layout)
@@ -210,7 +223,6 @@ class StatusWindow(QWidget):
 
     def reset(self, context: int) -> None:
         if context == 1:
-            print('1')
             layout = QtWidgets.QVBoxLayout()
             layout.addWidget(QLabel("File to import:"))
             layout.addWidget(QLineEdit())
