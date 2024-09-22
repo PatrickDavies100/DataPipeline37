@@ -4,7 +4,7 @@ A Data Science project  using datasets such as https://www.kaggle.com/datasets/a
 Technologies used:
 IDE: PyCharm 2024 1.2
 
-Libraries: PANDAS, PySide6
+Libraries: PANDAS, PySide6, PyArrow
 
 Objectives:
  1. Create tools for automated data process including cleaning, transformation, and processing.
