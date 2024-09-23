@@ -6,6 +6,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import QPalette, QColor, QAction
 from PySide6.QtCore import Qt, QObject, Signal, Slot, QModelIndex
 
+import Cleaning
 import FileProcessor
 
 current_dataset = "Current Dataset:\n"
@@ -28,6 +29,11 @@ class MainWindow(QMainWindow):
         layout1 = QHBoxLayout()
         status_panel = QVBoxLayout()
         main_panel = QTabWidget()
+
+        # Tools area of screen
+        tool_area = ToolWindow('purple')
+        status_panel.addWidget(tool_area)
+        layout1.addLayout(status_panel)
 
         # Context-sensitive window
         self.context_box = StatusWindow('orange')
@@ -53,11 +59,6 @@ class MainWindow(QMainWindow):
         options_menu = menu.addMenu("&Options")
         options_menu.addAction(button_appearance)
 
-        # Purple area of screen
-        status_area = AreaWidget('purple')
-        status_panel.addWidget(status_area)
-        layout1.addLayout(status_panel)
-
         # Window with data sample
         self.stackLayout = QStackedLayout()
         self.rightSideLayout = QVBoxLayout()
@@ -79,10 +80,9 @@ class MainWindow(QMainWindow):
         btn_active.pressed.connect(self.activate_tab_3)
         tabs_layout.addWidget(btn_active)
         active = AreaWidget('orange')
+
         self.stackLayout.addWidget(active)
-
         self.rightSideLayout.addLayout(tabs_layout)
-
         self.rightSideLayout.addLayout(self.stackLayout)
         layout1.addLayout(self.rightSideLayout)
 
@@ -209,12 +209,6 @@ class StatusWindow(QWidget):
         self.setAutoFillBackground(True)
         layout = QtWidgets.QVBoxLayout()
 
-        self.func_test_button = QPushButton("Test function")
-        self.func_test_button.setCheckable(True)
-        layout.addWidget(self.func_test_button)
-        # Connect button click to something in backend
-        #self.status_button.clicked.connect(self.fetch_text_from_backend)
-
         self.setLayout(layout)
 
         palette = self.palette()
@@ -222,12 +216,41 @@ class StatusWindow(QWidget):
         self.setPalette(palette)
 
     def reset(self, context: int) -> None:
+        layout = QtWidgets.QVBoxLayout()
         if context == 1:
-            layout = QtWidgets.QVBoxLayout()
             layout.addWidget(QLabel("File to import:"))
             layout.addWidget(QLineEdit())
             layout.addWidget(QPushButton("Import"))
         self.setLayout(layout)
+
+
+
+class ToolWindow(QWidget):
+    """The window used for data processing tools"""
+    def __init__(self, color: str):
+        super(ToolWindow, self).__init__()
+        self.setAutoFillBackground(True)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.MinimumExpanding)
+
+        layout = QtWidgets.QVBoxLayout()
+
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(color))
+        self.setPalette(palette)
+
+        btn_test_function = QPushButton("Test function")
+        btn_test_function.clicked.connect(self.test)
+        layout.addWidget(btn_test_function)
+
+        self.setLayout(layout)
+
+    def test(self):
+        c = FileProcessor.CurrentDataFrame()
+        print (c.get_dataframe()['col2'])
+        Cleaning.find_string_instances(c.get_dataframe()['col2'])
+
+
 
 class AreaWidget(QWidget):
 

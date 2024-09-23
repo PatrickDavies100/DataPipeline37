@@ -61,7 +61,7 @@ def read_excel(filename: str) -> pd.DataFrame:
 
 def test_dataframe_constructor() -> pd.DataFrame:
     print('Generating dataframe of test data in FileProcessor module')
-    d = {'col1': [1, 3, 3, 1, 3, 3, 1, 3, 3, 10],
+    d = {'col1': ['a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'],
          'col2': [4, None, 6, 1, 3, 3, 4, None, 6, 1],
          'col3': [8.19, None, 8.5, 4, None, 6, 1, 3, 3, 10],
          'col4': [1.2, None, None, 4, None, 6, 1, 3, 3, 1]}

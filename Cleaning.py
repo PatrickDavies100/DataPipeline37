@@ -28,10 +28,25 @@ def category_filter(df: pd.DataFrame) -> pd.DataFrame:
     """Filters a dataframe by category with optional extra features
     """
 
-def find_string_instances(s: pd.Series) -> pd.Series:
-    """Finds instances of a substring in a series."""
-    print(s.dtype)
-    series_dt = str(s.dtype)
+def find_string_instances(s: pd.Series) -> list:
+    """Finds instances of a substring in a series.
+    """
+    positives = []
+    if s.dtype == object:
+        print ('nuggies')
+    else:
+        print ('error')
+    return positives
+
+def find_num_instances(s: pd.Series) -> pd.Series:
+    """Finds instances of a numeric value in a series.
+    """
+    if s.dtype == int:
+        print ('nuggies')
+    elif s.dtype == float:
+        print ('buggies')
+    else:
+        print ('error')
 
 
 def find_and_replace(s: pd.Series) -> pd.Series:
