@@ -24,6 +24,24 @@ class CurrentDataFrame:
     def update_dataframe(self, new_df):
         self._dataframe = new_df
 
+class TempDataFrame:
+    """A temporary dataframe that the user can review before changing Current Dataframe
+
+    This should be a sample of limited size to improve performance."""
+    _instance = None
+    _dataframe = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(TempDataFrame, cls).__new__(cls)
+            cls._dataframe = pd.DataFrame()
+        return cls._instance
+
+    def get_dataframe(self):
+        return self._dataframe
+
+    def update_dataframe(self, new_df):
+        self._dataframe = new_df
 
 def read_file(filename: str) -> pd.DataFrame | None:
     """Reads supported filetypes and outputs them as a Dataframe
@@ -61,12 +79,12 @@ def read_excel(filename: str) -> pd.DataFrame:
 
 def test_dataframe_constructor() -> pd.DataFrame:
     print('Generating dataframe of test data in FileProcessor module')
-    d = {'col1': ['a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'],
+    d = {'col1': ['bbaba', 'aa', 'da', 'c', 'a', 'a', 'a', 'a', 'a', 'a'],
          'col2': [4, None, 6, 1, 3, 3, 4, None, 6, 1],
          'col3': [8.19, None, 8.5, 4, None, 6, 1, 3, 3, 10],
          'col4': [1.2, None, None, 4, None, 6, 1, 3, 3, 1]}
     df = pd.DataFrame(data=d)
-    c = CurrentDataFrame()
+    c = TempDataFrame()
     c.update_dataframe(new_df=df)
     ProcessesController.add_process(('Generate test dataframe',
                                      -1))

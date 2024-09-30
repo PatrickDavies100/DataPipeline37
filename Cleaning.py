@@ -2,6 +2,7 @@ import math
 from collections import defaultdict
 import pandas as pd
 from PySide6.QtCore import QObject, Signal
+from pandas import value_counts
 
 import ProcessesController
 
@@ -28,15 +29,34 @@ def category_filter(df: pd.DataFrame) -> pd.DataFrame:
     """Filters a dataframe by category with optional extra features
     """
 
-def find_string_instances(s: pd.Series) -> list:
+
+def find_string_instances(ser: pd.Series, input_string: str, case_sensitive: bool
+                          = True) -> dict:
     """Finds instances of a substring in a series.
+
+    This function returns a dict where the key is the row in the Series and the value is a list of
+    the locations where the substring occurs.
     """
-    positives = []
-    if s.dtype == object:
-        print ('nuggies')
+    positives = {}
+    if ser.dtype == object:
+        for ser_index, value in ser.items():
+            if case_sensitive is False:
+                value = value.lower()
+                input_string = input_string.lower()
+            instances = value.count(input_string)
+            search_point = 0
+            locations = []
+            while instances > 0:
+                search_point = value.index(input_string, search_point) + 1
+                locations.append(search_point - 1)
+                instances -= 1
+                if instances == 0:
+                    positives.update({ser_index: locations})
     else:
-        print ('error')
+        print ('wrong datatype')
+        print (ser.dtype)
     return positives
+
 
 def find_num_instances(s: pd.Series) -> pd.Series:
     """Finds instances of a numeric value in a series.
@@ -49,10 +69,28 @@ def find_num_instances(s: pd.Series) -> pd.Series:
         print ('error')
 
 
-def find_and_replace(s: pd.Series) -> pd.Series:
-    # This should show the instances in the data window and then allow the user to
-    # choose whether to replace
-    """Replaces a substring in a series with a new string."""
+def string_replace(s: pd.Series, input_string: str, new_string: str, count: int = 0) \
+        -> pd.Series:
+    """Replaces a substring in a series with a new string.
+
+    Positional args:
+    input_string: the string to be replaced
+    new_string: the string that will replace it
+    count: how many replacements to make per row
+    """
+    replace_dict = find_string_instances(s, input_string)
+    #in replace_dict, row is where we find the replacements, location is the index to replace
+
+    new_series = []
+
+    for i in range(len(s)):
+        if count == 0:
+            new_series.append(s[i].replace(input_string, new_string))
+        else:
+            new_series.append(s[i].replace(input_string, new_string, count))
+
+    new_series = pd.Series(new_series)
+    return new_series
 
 
 def unique_value_count(s: pd.Series) -> tuple:

@@ -11,7 +11,7 @@ import FileProcessor
 
 current_dataset = "Current Dataset:\n"
 mode_day = True
-sample_n = 5  # Number of records displayed in sample dataframe
+sample_n = 100  # Number of records displayed in sample dataframe
 
 
 class MainWindow(QMainWindow):
@@ -197,8 +197,10 @@ class DataDisplayWindow(QWidget):
     def update_df(self, new_data):
         """Changes the data being displayed"""
         pd.options.future.infer_string = True
-        self.model.set_dataframe(new_data.sample(sample_n).sort_index())
-        # need to put sample in order
+        if sample_n <= len(new_data):
+            self.model.set_dataframe(new_data.sample(sample_n).sort_index())
+        else:
+            self.model.set_dataframe(new_data.sort_index())
 
 
 class StatusWindow(QWidget):
@@ -246,10 +248,11 @@ class ToolWindow(QWidget):
         self.setLayout(layout)
 
     def test(self):
-        c = FileProcessor.CurrentDataFrame()
-        print (c.get_dataframe()['col2'])
-        Cleaning.find_string_instances(c.get_dataframe()['col2'])
+        c = FileProcessor.TempDataFrame()
 
+        print(Cleaning.find_string_instances(c.get_dataframe()['col1'],'a'))
+        newone = Cleaning.string_replace(c.get_dataframe()['col1'], 'a', 'ddd')
+        print (newone)
 
 
 class AreaWidget(QWidget):
