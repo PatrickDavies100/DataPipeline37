@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, Signal
 #File Process Key
 
 import ProcessesController
-
+TempDataFrame_max = 100
 
 class CurrentDataFrame:
     """The dataframe that is active"""
@@ -23,6 +23,7 @@ class CurrentDataFrame:
 
     def update_dataframe(self, new_df):
         self._dataframe = new_df
+
 
 class TempDataFrame:
     """A temporary dataframe that the user can review before changing Current Dataframe
@@ -84,8 +85,11 @@ def test_dataframe_constructor() -> pd.DataFrame:
          'col3': [8.19, None, 8.5, 4, None, 6, 1, 3, 3, 10],
          'col4': [1.2, None, None, 4, None, 6, 1, 3, 3, 1]}
     df = pd.DataFrame(data=d)
-    c = TempDataFrame()
+    c = CurrentDataFrame()
     c.update_dataframe(new_df=df)
+    t = TempDataFrame()
+    t.update_dataframe(c.get_dataframe().sample(TempDataFrame_max))
+
     ProcessesController.add_process(('Generate test dataframe',
                                      -1))
     return c.get_dataframe()

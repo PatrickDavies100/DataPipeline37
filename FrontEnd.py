@@ -235,7 +235,8 @@ class ToolWindow(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.MinimumExpanding)
 
-        layout = QtWidgets.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
+        grid_layout = QtWidgets.QGridLayout()
 
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(color))
@@ -243,17 +244,28 @@ class ToolWindow(QWidget):
 
         btn_test_function = QPushButton("Test function")
         btn_test_function.clicked.connect(self.test)
-        layout.addWidget(btn_test_function)
+        grid_layout.addWidget(btn_test_function, 0, 0)
 
-        self.setLayout(layout)
+        btn_find_replace = QPushButton("Find and replace")
+        grid_layout.addWidget(btn_find_replace, 0, 1)
+
+        btn_confirm = QPushButton("Ok")
+        btn_confirm.clicked.connect(self.confirm)
+        grid_layout.addWidget(btn_confirm, 0, 1)
+
+
+        main_layout.addLayout(grid_layout)
+
+        self.setLayout(main_layout)
 
     def test(self):
-        c = FileProcessor.TempDataFrame()
+        c = FileProcessor.CurrentDataFrame()
+        print(c.get_dataframe())
 
-        print(Cleaning.find_string_instances(c.get_dataframe()['col1'],'a'))
-        newone = Cleaning.string_replace(c.get_dataframe()['col1'], 'a', 'ddd')
-        print (newone)
-
+    def confirm(self):
+        # Run all temp_processes on CurrentDataFrame
+        print ("Updating dataframe")
+        FileProcessor.CurrentDataFrame.update_dataframe(FileProcessor.TempDataFrame.get_dataframe())
 
 class AreaWidget(QWidget):
 

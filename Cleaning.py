@@ -25,9 +25,29 @@ def get_metadata(df: pd.DataFrame) -> str:
     return result
 
 
-def category_filter(df: pd.DataFrame) -> pd.DataFrame:
-    """Filters a dataframe by category with optional extra features
-    """
+def replace_filter(ser: pd.Series) -> int:
+    """Calls the correct function to replace values in a series based on the datatype."""
+    # Needs to check that the series is compatible with the search term. For example, if you search
+    # 'abc' in ant int64 series, that's no good.
+    # float_to_int()
+    if pd.api.types.is_integer_dtype(ser.dtype):
+        print("The series contains integers.")
+    elif pd.api.types.is_float_dtype(ser.dtype):
+        print("The series contains floats.")
+    elif pd.api.types.is_string_dtype(ser.dtype):
+        print("The series contains strings.")
+    elif pd.api.types.is_bool_dtype(ser.dtype):
+        print("The series contains booleans.")
+    elif isinstance(ser.dtype, pd.CategoricalDtype):
+        print("The series contains categories.")
+    elif pd.api.types.is_datetime64_any_dtype(ser.dtype):
+        print("The series contains dates or timestamps.")
+    else:
+        print("The series contains some other data type.")
+
+def type_converter(ser: pd.Series) -> pd.Series:
+    """Verifies the datatype and that it can be converted."""
+
 
 
 def find_string_instances(ser: pd.Series, input_string: str, case_sensitive: bool
@@ -38,23 +58,19 @@ def find_string_instances(ser: pd.Series, input_string: str, case_sensitive: boo
     the locations where the substring occurs.
     """
     positives = {}
-    if ser.dtype == object:
-        for ser_index, value in ser.items():
-            if case_sensitive is False:
-                value = value.lower()
-                input_string = input_string.lower()
-            instances = value.count(input_string)
-            search_point = 0
-            locations = []
-            while instances > 0:
-                search_point = value.index(input_string, search_point) + 1
-                locations.append(search_point - 1)
-                instances -= 1
-                if instances == 0:
-                    positives.update({ser_index: locations})
-    else:
-        print ('wrong datatype')
-        print (ser.dtype)
+    for ser_index, value in ser.items():
+        if case_sensitive is False:
+            value = value.lower()
+            input_string = input_string.lower()
+        instances = value.count(input_string)
+        search_point = 0
+        locations = []
+        while instances > 0:
+            search_point = value.index(input_string, search_point) + 1
+            locations.append(search_point - 1)
+            instances -= 1
+            if instances == 0:
+                positives.update({ser_index: locations})
     return positives
 
 
